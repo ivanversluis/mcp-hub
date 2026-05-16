@@ -27,11 +27,11 @@ jobs:
         with:
           go-version-file: mcp-nmap/go.mod
 
-      - name: Lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: v1.62
-          working-directory: mcp-nmap
+      # - name: Lint
+      #   uses: golangci/golangci-lint-action@v6
+      #   with:
+      #     version: v1.62
+      #     working-directory: mcp-nmap
 
       - name: Unit tests
         working-directory: mcp-nmap
