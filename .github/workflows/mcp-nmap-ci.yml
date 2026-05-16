@@ -1,0 +1,71 @@
+name: MCP Nmap CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "mcp-nmap/**"
+      - ".github/workflows/mcp-nmap-ci.yml"
+  pull_request:
+    paths:
+      - "mcp-nmap/**"
+      - ".github/workflows/mcp-nmap-ci.yml"
+
+jobs:
+  lint-test-security-build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: mcp-nmap/go.mod
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.62
+          working-directory: mcp-nmap
+
+      - name: Unit tests
+        working-directory: mcp-nmap
+        run: go test ./... -v -race -coverprofile=coverage.out
+
+      - name: Security scan (gosec)
+        uses: securego/gosec@v2.22.4
+        with:
+          args: ./...
+          working-directory: mcp-nmap
+
+      - name: Security scan (govulncheck)
+        working-directory: mcp-nmap
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push mcp-nmap image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./mcp-nmap
+          file: ./mcp-nmap/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ghcr.io/${{ github.repository }}/mcp-nmap:${{ github.sha }}
+            ghcr.io/${{ github.repository }}/mcp-nmap:latest
