@@ -1,0 +1,22 @@
+[project]
+name = "mcp-nmap-python"
+version = "0.1.0"
+description = "Draft Python MCP server for Nmap with structured JSON responses"
+requires-python = ">=3.11"
+dependencies = [
+  "mcp>=1.9.0",
+  "xmltodict>=0.13.0",
+]
+
+[project.scripts]
+mcp-nmap = "mcp_nmap_python.server:main"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
